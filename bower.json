@@ -1,0 +1,14 @@
+{
+  "name": "maps",
+  "authors": [
+    "Hugo Fabricio <hugo@brzdigital.com.br>"
+  ],
+  "description": "",
+  "main": "jquery.maps.js",
+  "keywords": [
+    "maps"
+  ],
+  "license": "MIT",
+  "homepage": "",
+  "private": false
+}
