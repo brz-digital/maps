@@ -1,70 +1,85 @@
-(function($){
-    $.fn.maps = function(settings){
-        var config = {
-            zoom: 5,
-            scrollwheel: false,
-            center: new google.maps.LatLng(-8.381525,-34.969482)
-        };
+(function ($) {
 
-        if (settings){
-            $.extend(config, settings);
+  $.fn.gmaps = function(options) {
+
+  return this.each(function() {
+    var zoom = $(this).data('zoom');
+
+    var settings = $.extend({
+      zoom: zoom,
+      scrollwheel: false,
+      center: new google.maps.LatLng(-8.381525,-34.969482)
+    }, options);
+
+    var openWindow = [];
+    var map = new google.maps.Map(this,settings);
+    var markerOptions = {};
+
+    var dataUrl = $(this).data('json-url');
+    var dataLat;
+    var dataLng;
+    var dataTitle;
+    var dataText;
+    var markerIcon = $(this).data('icon');
+    var data;
+
+    if($(this).data('json-url') !== undefined){
+
+      $.getJSON(dataUrl, data, function (result) {
+        data = result.data;
+        for(var k in data) {
+          dataLat = data[k].latitude;
+          dataLng = data[k].longitude;
+          dataTitle = data[k].title;
+          dataText = data[k].text;
+          setMap(map, markerOptions, markerIcon, dataLat, dataLng, dataTitle, dataText);
         }
+      });
 
-        return this.each(function(){
-            var openWindow = [],
-                map = new google.maps.Map(this, settings),
-                markerOptions = {},
-                dataUrl = this.data('jsonUrl'),
-                dataLat = this.data('latitude'),
-                dataLng = this.data('longitude'),
-                markerIcon = this.data('icon'),
-                data;
+    } else {
 
-            if (dataLat !== undefined && dataLng !== undefined) {
+      dataLat = $(this).data('latitude');
+      dataLng = $(this).data('longitude');
+      dataTitle = $(this).data('title');
+      dataText = $(this).data('text');
+      setMap(map, markerOptions, markerIcon, dataLat, dataLng, dataTitle, dataText);
 
-                generateMap(map, markerOptions, markerIcon, dataLat, dataLng);
+    }
 
-            } else if(dataUrl !== undefined) {
+    function setMap( map, markerOptions, markerIcon, dataLat, dataLng, dataTitle, dataText ) {
+      markerOptions['icon'] = new google.maps.MarkerImage(markerIcon, null, null, null, new google.maps.Size(24, 24));
+      markerOptions['position'] = new google.maps.LatLng(dataLat, dataLng);
+      markerOptions['content'] = ['<b>',dataTitle,'</b><br>',dataText].join('');
 
-                $.getJSON(dataURL, data, function (result) {
-                    data = result.data;
-                    for(var k in data) {
-                        dataLat = data[k].latitude;
-                        dataLng = data[k].longitude;
-                        generateMap(map, markerOptions, markerIcon, dataLat, dataLng);
-                    }
-                });
+      var markerSettings = $.extend({
+        map: map
+      }, markerOptions);
 
-            }
+      var marker = new google.maps.Marker(markerSettings);
 
-            var generateMap = function(map, markerOptions, markerIcon, dataLat, dataLng) {
-                markerOptions['icon'] = new google.maps.MarkerImage(markerIcon, null, null, null, new google.maps.Size(24, 24));
-                markerOptions['position'] = new google.maps.LatLng(dataLat, dataLng);
-                markerOptions['content'] = ['<b>',data[k].name,'</b><br>',data[k].address].join('');
+      map.setCenter(markerOptions['position']);
 
-                var markerSettings = $.extend({
-                        map: map
-                    }, markerOptions);
-
-                var marker = new google.maps.Marker(markerSettings);
-
-                map.setCenter(markerOptions['position']);
-
-                markerClick(marker, markerOptions['content']);
-            };
-
-            var markerClick = function(marker, content) {
-                var infowindow = new google.maps.InfoWindow({ content: content });
-
-                google.maps.event.addListener(marker, 'click', function() {
-                    if(typeof openWindow[0] !== 'undefined')
-                        openWindow[0].close();
-                        openWindow.pop();
-
-                    infowindow.open(map,marker);
-                    openWindow.push(infowindow);
-                });
-            };
-        });
+      markerClick(marker, markerOptions['content']);
     };
-})(jQuery);
+
+    function markerClick(marker, content) {
+      var infowindow = new google.maps.InfoWindow({
+        content: content
+      });
+
+      google.maps.event.addListener(marker, 'click', function() {
+        if(typeof openWindow[0] !== 'undefined')
+          openWindow[0].close();
+        openWindow.pop();
+
+        infowindow.open(map,marker);
+        openWindow.push(infowindow);
+      });
+
+    };
+
+  });
+
+};
+
+}(jQuery));
